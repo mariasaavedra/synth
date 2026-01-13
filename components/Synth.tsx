@@ -1,4 +1,5 @@
 "use client";
+import { emitNote } from "@/lib/synthEvents";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Note, NoteName, Scale } from "tonal";
 import * as Tone from "tone";
@@ -30,6 +31,7 @@ export default function Synth() {
   const playNote = useCallback(
     async (noteName: string) => {
       await ensureAudio();
+      emitNote()
 
       const synth = synthRef.current;
       if (!synth) return;

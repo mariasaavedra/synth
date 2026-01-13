@@ -1,8 +1,9 @@
 "use client";
 
 import * as THREE from "three";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { SYNTH_NOTE_EVENT } from "@/lib/synthEvents";
 
 // 1) Put your GLSL here.
 // If your original p5 shader is "shadertoy-like" (mainImage), see the wrapper section below.
@@ -91,7 +92,6 @@ void main() {
 }
 `;
 
-
 function CloudPlane() {
   const matRef = useRef<THREE.ShaderMaterial>(null);
   const { size, gl } = useThree();
@@ -100,33 +100,40 @@ function CloudPlane() {
   const uniforms = useMemo(
     () => ({
       u_time: { value: 0 },
-      u_frame: { value: 0 },
       u_resolution: { value: new THREE.Vector2(1, 1) },
-      u_mouse: { value: new THREE.Vector2(0.5, 0.5) },
     }),
     []
   );
 
-  useFrame(({ clock, pointer }) => {
+  const energyRef = useRef(0);
+  const tRef = useRef(0);
+
+  useEffect(() => {
+    const onNote = () => {
+      energyRef.current = 1;
+    };
+    window.addEventListener(SYNTH_NOTE_EVENT, onNote);
+    return () => window.removeEventListener(SYNTH_NOTE_EVENT, onNote);
+  }, []);
+  useFrame((state, delta) => {
     const mat = matRef.current;
     if (!mat) return;
-
-    // mutate through the material (allowed)
-    mat.uniforms.u_time.value = clock.getElapsedTime();
-    mat.uniforms.u_frame.value += 1;
 
     mat.uniforms.u_resolution.value.set(
       size.width * gl.getPixelRatio(),
       size.height * gl.getPixelRatio()
     );
 
-    // pointer is -1..1 -> 0..1
-    mat.uniforms.u_mouse.value.set(
-      pointer.x * 0.5 + 0.5,
-      pointer.y * 0.5 + 0.5
-    );
-  });
+    // decay envelope
+    energyRef.current = Math.max(0, energyRef.current - 2.5 * delta);
 
+    const idleSpeed = 0.0; // fully frozen when idle
+    const activeBoost = 0.08; // slow movement when notes happen
+    const speed = idleSpeed + activeBoost * energyRef.current;
+
+    tRef.current += delta * speed;
+    mat.uniforms.u_time.value = tRef.current;
+  });
   return (
     <mesh>
       <planeGeometry args={[2, 2]} />
