@@ -10,7 +10,6 @@ export default function Synth() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Create once on mount, dispose on unmount
     const synth = new Tone.Synth().toDestination();
     synthRef.current = synth;
 
@@ -80,7 +79,7 @@ export default function Synth() {
             : `bg-white  text-white h-45 mx-2 `
         }`}
       >
-        {c}
+   
       </div>
     );
   }
