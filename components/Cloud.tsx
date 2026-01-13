@@ -14,53 +14,83 @@ const vert = /* glsl */ `
   }
 `;
 
-// Placeholder frag (replace with SamuelYAN frag body)
-// Keep the uniforms exactly as you used in p5.
 const frag = /* glsl */ `
-  precision highp float;
+precision highp float;
 
-  uniform vec2 u_resolution;
-  uniform float u_time;
-  uniform float u_frame;
-  uniform vec2 u_mouse;
+uniform vec2 u_resolution;
+uniform float u_time;
 
-  varying vec2 vUv;
+// --- hash + noise ---
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
 
-  // --- demo cloud-ish noise (replace with the real shader) ---
-  float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453123); }
-  float noise(vec2 p){
-    vec2 i = floor(p), f = fract(p);
-    float a = hash(i);
-    float b = hash(i+vec2(1.,0.));
-    float c = hash(i+vec2(0.,1.));
-    float d = hash(i+vec2(1.,1.));
-    vec2 u = f*f*(3.-2.*f);
-    return mix(a,b,u.x) + (c-a)*u.y*(1.-u.x) + (d-b)*u.x*u.y;
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+// --- fbm ---
+float fbm(vec2 p) {
+  float value = 0.0;
+  float amplitude = 0.25;
+  for (int i = 0; i < 2; i++) {
+    value += amplitude * noise(p);
+    p *= 1.25;
+    amplitude *= 0.125;
   }
-  float fbm(vec2 p){
-    float v=0., a=.5;
-    for(int i=0;i<5;i++){
-      v += a*noise(p);
-      p *= 2.0;
-      a *= 0.5;
-    }
-    return v;
-  }
+  return value;
+}
 
-  void main() {
-    // Convert to pixel coords like shadertoy style if you want
-    vec2 fragCoord = vUv * u_resolution;
-    vec2 uv = (fragCoord - 0.5*u_resolution) / min(u_resolution.x, u_resolution.y);
+float contourLines(float v, float frequency, float line_thickness) {
+  float lines = abs(fract(v * frequency) - 0.299);
+  return smoothstep(0.5 - line_thickness, 0.499 + line_thickness, lines);
+}
 
-    // mild mouse influence
-    uv += (u_mouse - vec2(0.5)) * 0.25;
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  uv = uv * -4.0 - 10.0;
+  uv.x *= u_resolution.x / u_resolution.y;
 
-    float n = fbm(uv*2.5 + vec2(u_time*0.05, -u_time*0.07));
-    float c = smoothstep(0.35, 0.75, n);
+  vec2 warp1 = vec2(
+    noise(uv * 1.0 + vec2(u_time * 1.3, u_time * 0.2)),
+    noise(uv * 120.0 + vec2(-u_time * 0.4, u_time * 0.2))
+  );
+  vec2 uv2 = uv + (warp1 - 0.25) * 0.6;
 
-    gl_FragColor = vec4(vec3(c), 1.0);
-  }
+  vec2 warp2 = vec2(
+    noise(uv2 * 1.0 + vec2(-u_time * 0.6, u_time * 0.4)),
+    noise(uv2 * 190.0 + vec2(u_time * 2.5, u_time * 0.3))
+  );
+  vec2 uvFinal = uv2 + (warp2 - 1.5) / 0.995;
+
+  // --- fbm flow ---
+  vec2 flow = uvFinal + vec2(u_time * 0.26, u_time * 0.1);
+  float n = fbm(flow);
+
+  float n1 = fbm(flow + vec2(0.001, 0.0));
+  float n2 = fbm(flow + vec2(0.0, 0.001));
+  float grad = length(vec2(n1 - n, n2 - n));
+  float edge = smoothstep(0.02, 0.2, grad);
+
+  float frequency = sin(u_time * 0.1) * 5.0 + 10.0;
+  float thickness = 0.125;
+  float lines = contourLines(n, frequency, thickness);
+
+  float finalVal = mix(lines / 0.99, 1.0 / 0.01, edge * 0.9);
+
+  gl_FragColor = vec4(vec3(finalVal), 1.0);
+}
 `;
+
 
 function CloudPlane() {
   const matRef = useRef<THREE.ShaderMaterial>(null);
@@ -116,7 +146,7 @@ export default function Cloud() {
       <Canvas
         className="rounded-2xl"
         orthographic
-        camera={{ position: [0, 0, 1], zoom: 100 }}
+        camera={{ position: [0, 0, 0.5], zoom: 100 }}
         dpr={[1, 2]}
       >
         <CloudPlane />
