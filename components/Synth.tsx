@@ -34,7 +34,7 @@ export default function Synth() {
       const synth = synthRef.current;
       if (!synth) return;
 
-      const pitch = `${noteName}3`;
+      const pitch = `${noteName}4`;
       const freq = Note.freq(pitch) ?? 0;
       const midi = Note.midi(pitch) ?? 0;
 
