@@ -58,17 +58,17 @@ export default function Synth() {
 
   function renderNote(c: NoteName, i: number) {
     const note = Note.get(c);
-    const styles =
-      "rounded-lg border-2 border-white cursor-pointer h-50 w-10  mx-2";
+    const styles = "rounded-lg border-2 border-white cursor-pointer w-10 ";
     return (
       <div
         key={i}
         onMouseDown={() => playNote(c)}
         onMouseUp={() => endNote()}
+        style={isBlackKey(c) ? { transform: `translateX(${i * 32}px)` } : {}}
         className={`${styles} ${
           isBlackKey(note.name)
-            ? "bg-black  text-black"
-            : "bg-white  text-white"
+            ? `bg-black  text-black absolute h-25 top-2 z-10`
+            : `bg-white  text-white h-45 mx-2 `
         }`}
       >
         {c}

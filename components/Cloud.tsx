@@ -212,7 +212,7 @@ function CloudPlane() {
 
 export default function Cloud() {
   return (
-    <div className="rounded-2xl p-4 border-2 border-white cursor-pointer h-60 w-60 mx-2 !overflow-hidden">
+    <div className="rounded-2xl p-4 border-2 border-white cursor-pointer h-55 w-60 mx-2 !overflow-hidden">
       <Canvas
         className="rounded-2xl"
         orthographic
