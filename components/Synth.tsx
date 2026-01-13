@@ -31,15 +31,21 @@ export default function Synth() {
   const playNote = useCallback(
     async (noteName: string) => {
       await ensureAudio();
-      emitNote()
+      emitNote();
 
       const synth = synthRef.current;
       if (!synth) return;
       const pitch = `${noteName}3`;
-      synth.triggerAttackRelease(pitch, "8n");
+      synth.triggerAttack(pitch);
     },
     [ensureAudio]
   );
+
+  const endNote = () => {
+    const synth = synthRef.current;
+    if (!synth) return;
+    synth.triggerRelease();
+  };
 
   function isBlackKey(noteName: string): boolean {
     return Note.get(noteName).alt !== 0;
@@ -52,7 +58,8 @@ export default function Synth() {
     return (
       <div
         key={i}
-        onClick={() => playNote(c)}
+        onMouseDown={() => playNote(c)}
+        onMouseUp={() => endNote()}
         className={`${styles} ${
           isBlackKey(note.name)
             ? "bg-black  text-black"
