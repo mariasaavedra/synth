@@ -212,11 +212,11 @@ function CloudPlane() {
 
 export default function Cloud() {
   return (
-    <div className="rounded-2xl p-4 border-2 border-white cursor-pointer h-55 w-60 mx-2 !overflow-hidden">
+    <div className="rounded-2xl  border-2 border-white cursor-pointer w-100 h-full  md:h-55 md:w-60 md:m-2 !overflow-hidden">
       <Canvas
         className="rounded-2xl"
         orthographic
-        camera={{ position: [0, 0, 0.5], zoom: 100 }}
+        camera={{ position: [0, 0, 1], zoom: 200 }}
         dpr={[1, 2]}
       >
         <CloudPlane />

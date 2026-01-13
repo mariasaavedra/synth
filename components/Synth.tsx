@@ -58,13 +58,22 @@ export default function Synth() {
 
   function renderNote(c: NoteName, i: number) {
     const note = Note.get(c);
-    const styles = "rounded-lg border-2 border-white cursor-pointer w-10 ";
+    const styles =
+      "rounded-lg border-2 border-white cursor-pointer w-10  touch-none";
     return (
       <div
         key={i}
+        onPointerDown={(e) => {
+          e.preventDefault(); // avoid scroll/zoom during press
+          playNote(c);
+        }}
+        onPointerUp={(e) => {
+          e.preventDefault(); // avoid scroll/zoom during press
+          endNote();
+        }}
         onMouseDown={() => playNote(c)}
         onMouseUp={() => endNote()}
-        style={isBlackKey(c) ? { transform: `translateX(${i * 32}px)` } : {}}
+        style={isBlackKey(c) ? { transform: `translateX(${i * 1.85}rem)` } : {}}
         className={`${styles} ${
           isBlackKey(note.name)
             ? `bg-black  text-black absolute h-25 top-2 z-10`
@@ -77,7 +86,7 @@ export default function Synth() {
   }
 
   return (
-    <div className="relative flex items-start border-2 p-4 rounded-xl">
+    <div className="relative  w-100 flex items-start border-2 p-4 rounded-xl">
       {chromatic.map((c, i) => renderNote(c, i))}
     </div>
   );
