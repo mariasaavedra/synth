@@ -4,7 +4,6 @@ import { Note, NoteName, Scale } from "tonal";
 import * as Tone from "tone";
 
 export default function Synth() {
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const chromatic: NoteName[] = Scale.get("C chromatic").notes; // ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
   const synthRef = useRef<Tone.Synth | null>(null);
   const [ready, setReady] = useState(false);
@@ -27,14 +26,6 @@ export default function Synth() {
     await Tone.loaded();
     setReady(true);
   }, [ready]);
-
-  async function initialize() {
-    await Tone.start();
-    await Tone.loaded();
-    Tone.getTransport().start();
-  }
-
-  initialize();
 
   const playNote = useCallback(
     async (noteName: string) => {
