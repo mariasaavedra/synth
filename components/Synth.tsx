@@ -31,11 +31,15 @@ export default function Synth() {
   const playNote = useCallback(
     async (noteName: string) => {
       await ensureAudio();
-      emitNote();
 
       const synth = synthRef.current;
       if (!synth) return;
+
       const pitch = `${noteName}3`;
+      const freq = Note.freq(pitch) ?? 0;
+      const midi = Note.midi(pitch) ?? 0;
+
+      emitNote({ note: pitch, midi, freq, velocity: 1 });
       synth.triggerAttack(pitch);
     },
     [ensureAudio]
