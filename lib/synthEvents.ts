@@ -1,14 +1,20 @@
 // lib/synthEvents.ts
-export const SYNTH_NOTE_EVENT = "synth:note";
+export const SYNTH_NOTE_ON_EVENT = "synth:note_on";
+export const SYNTH_NOTE_OFF_EVENT = "synth:note_off";
 
 export type SynthNoteDetail = {
-  note: string;     // e.g. "C#3"
-  midi: number;     // e.g. 61
-  freq: number;     // e.g. 277.18
+  note: string;   // "C#3"
+  midi: number;
+  freq: number;
   velocity?: number; // 0..1
 };
 
-export function emitNote(detail: SynthNoteDetail) {
+export function emitNoteOn(detail: SynthNoteDetail) {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent<SynthNoteDetail>(SYNTH_NOTE_EVENT, { detail }));
+  window.dispatchEvent(new CustomEvent<SynthNoteDetail>(SYNTH_NOTE_ON_EVENT, { detail }));
+}
+
+export function emitNoteOff() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(SYNTH_NOTE_OFF_EVENT));
 }

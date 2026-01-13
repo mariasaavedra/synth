@@ -4,7 +4,11 @@
 import * as THREE from "three";
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { SYNTH_NOTE_EVENT, type SynthNoteDetail } from "@/lib/synthEvents";
+import {
+  SYNTH_NOTE_OFF_EVENT,
+  SYNTH_NOTE_ON_EVENT,
+  type SynthNoteDetail,
+} from "@/lib/synthEvents";
 
 const vert = /* glsl */ `
   varying vec2 vUv;
@@ -115,43 +119,48 @@ function CloudPlane() {
     () => ({
       u_time: { value: 0 },
       u_resolution: { value: new THREE.Vector2(1, 1) },
-
-      // NEW
-      u_freq: { value: 0 },
+      u_freq: { value: 220 },
       u_energy: { value: 0 },
-      u_midiNorm: { value: 0 },
+      u_midiNorm: { value: 0.5 },
     }),
     []
   );
+  const BASE_FREQ = 220;
+  const BASE_MIDI_NORM = 0.5;
 
-  // targets + smoothed values
   const energyRef = useRef(0);
-  const freqTargetRef = useRef(220);
-  const midiNormTargetRef = useRef(0.5);
-
+  const freqTargetRef = useRef(BASE_FREQ);
+  const midiNormTargetRef = useRef(BASE_MIDI_NORM);
   const tRef = useRef(0);
 
   useEffect(() => {
-    const onNote = (e: Event) => {
+    const onNoteOn = (e: Event) => {
       const ce = e as CustomEvent<SynthNoteDetail>;
       const d = ce.detail;
       if (!d) return;
 
-      // envelope pop
       energyRef.current = 1;
 
-      // targets
-      freqTargetRef.current = d.freq || 220;
+      freqTargetRef.current = d.freq || BASE_FREQ;
 
-      // normalize midi into ~0..1 (pick a sensible span)
-      // Here: 36..84 (C2..C6) -> 0..1
       const midi = d.midi ?? 60;
       const norm = (midi - 36) / (84 - 36);
       midiNormTargetRef.current = Math.min(1, Math.max(0, norm));
     };
 
-    window.addEventListener(SYNTH_NOTE_EVENT, onNote);
-    return () => window.removeEventListener(SYNTH_NOTE_EVENT, onNote);
+    const onNoteOff = () => {
+      // snap back immediately OR let it ease back (your choice)
+      energyRef.current = 0;
+      freqTargetRef.current = BASE_FREQ;
+      midiNormTargetRef.current = BASE_MIDI_NORM;
+    };
+
+    window.addEventListener(SYNTH_NOTE_ON_EVENT, onNoteOn);
+    window.addEventListener(SYNTH_NOTE_OFF_EVENT, onNoteOff);
+    return () => {
+      window.removeEventListener(SYNTH_NOTE_ON_EVENT, onNoteOn);
+      window.removeEventListener(SYNTH_NOTE_OFF_EVENT, onNoteOff);
+    };
   }, []);
 
   useFrame((state, delta) => {
@@ -163,23 +172,29 @@ function CloudPlane() {
       size.height * gl.getPixelRatio()
     );
 
-    // decay envelope
-    energyRef.current = Math.max(0, energyRef.current - 2.5 * delta);
-
-    // frozen when idle, moves slightly when energy > 0
+    // if you want *hard* revert on note off, keep energy at 0 and stop time
     const idleSpeed = 0.0;
     const activeBoost = 0.08;
     const speed = idleSpeed + activeBoost * energyRef.current;
     tRef.current += delta * speed;
 
-    // smooth pitch uniforms (avoid jumpy visuals)
-    const lerp = (a: number, b: number, k: number) => a + (b - a) * (1 - Math.exp(-k * delta));
+    const expLerp = (a: number, b: number, k: number) =>
+      a + (b - a) * (1 - Math.exp(-k * delta));
 
     mat.uniforms.u_time.value = tRef.current;
     mat.uniforms.u_energy.value = energyRef.current;
 
-    mat.uniforms.u_freq.value = lerp(mat.uniforms.u_freq.value, freqTargetRef.current, 18);
-    mat.uniforms.u_midiNorm.value = lerp(mat.uniforms.u_midiNorm.value, midiNormTargetRef.current, 18);
+    // ease back to baseline after NOTE_OFF (targets reset)
+    mat.uniforms.u_freq.value = expLerp(
+      mat.uniforms.u_freq.value,
+      freqTargetRef.current,
+      22
+    );
+    mat.uniforms.u_midiNorm.value = expLerp(
+      mat.uniforms.u_midiNorm.value,
+      midiNormTargetRef.current,
+      22
+    );
   });
 
   return (

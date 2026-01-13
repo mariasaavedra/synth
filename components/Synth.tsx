@@ -1,5 +1,5 @@
 "use client";
-import { emitNote } from "@/lib/synthEvents";
+import { emitNoteOn, emitNoteOff } from "@/lib/synthEvents";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Note, NoteName, Scale } from "tonal";
 import * as Tone from "tone";
@@ -39,7 +39,7 @@ export default function Synth() {
       const freq = Note.freq(pitch) ?? 0;
       const midi = Note.midi(pitch) ?? 0;
 
-      emitNote({ note: pitch, midi, freq, velocity: 1 });
+      emitNoteOn({ note: pitch, midi, freq, velocity: 1 });
       synth.triggerAttack(pitch);
     },
     [ensureAudio]
@@ -49,6 +49,7 @@ export default function Synth() {
     const synth = synthRef.current;
     if (!synth) return;
     synth.triggerRelease();
+    emitNoteOff();
   };
 
   function isBlackKey(noteName: string): boolean {
