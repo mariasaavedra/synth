@@ -1,4 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+# Cloud Piano
+
+A browser-based polyphonic piano with a reactive cloud mesh.  
+Built with **Tone.js** for audio and **React Three Fiber** for visuals.
+
+This project is intentionally simple: play notes → hear sound → see sound.
+
+---
+
+## Tech Stack
+
+- **Framework:** Next.js (App Router) + React + TypeScript
+- **Audio:** Tone.js (Web Audio API under the hood)
+- **3D / Visuals:** Three.js via @react-three/fiber
+- **Styling:** TailwindCSS
+- **State:** Minimal (Zustand or local React state)
+
+---
+
+## Features
+
+- Polyphonic on-screen piano (mouse, touch, keyboard)
+- ADSR envelope (attack, release)
+- Waveform selection
+- Low-pass filter (cutoff + resonance)
+- Distortion + limiter
+- Master volume
+- Pitch bend (continuous, affects held notes)
+- Fullscreen cloud mesh reacting to live audio analysis
+- Mobile-safe (pointer events + autoplay handling)
+
+---
+
+## References
+
+### Audio / Tone.js
+- [Tone.js Official Site](https://tonejs.github.io/) — framework for interactive web audio, synths, effects, scheduling, transport. :contentReference[oaicite:0]{index=0}
+- [Tone.js API Docs](https://tonejs.github.io/docs/) — full class & method reference. :contentReference[oaicite:1]{index=1}
+- [Tone.Analyser (FFT + waveform)](https://tonejs.github.io/docs/r13/Analyser) — wrapper over native AnalyserNode. :contentReference[oaicite:2]{index=2}
+
+### Web Audio API (Core)
+- [Web Audio API — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) — conceptual overview & reference. :contentReference[oaicite:3]{index=3}
+- [Using the Web Audio API — MDN Tutorial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_Web_Audio_API) — intro with examples. :contentReference[oaicite:4]{index=4}
+- [AnalyserNode — MDN](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode) — real-time FFT/time-domain data extraction. :contentReference[oaicite:5]{index=5}
+
+### WebGL / Rendering
+- [WebGL API — MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API) — low-level GPU rendering API reference.
+- [React Three Fiber (R3F) Docs](https://r3f.docs.pmnd.rs/) — React renderer for three.js scenes & hooks. :contentReference[oaicite:6]{index=6}
+- [three.js Core Docs](https://threejs.org/docs/) — base three.js library (geometry, shaders, audio helpers). :contentReference[oaicite:7]{index=7}
+
 
 ## Getting Started
 
